@@ -1,0 +1,89 @@
+   /* Main App Body */
+        body {
+            background-color: #131314;
+        }
+
+        /* Center the main content and add padding for the fixed input */
+        .block-container {
+            max-width: 800px;
+            padding-top: 2rem;
+            padding-bottom: 8rem; /* Increased padding */
+        }
+        
+        /* Main chat area */
+        [data-testid="main"] {
+            background-color: #131314;
+        }
+
+        /* Chat Messages Styling */
+        .stChatMessage {
+            border-radius: 12px;
+            padding: 1em;
+            margin-bottom: 1rem;
+            animation: fadeInSlideUp 0.5s ease-out forwards;
+            opacity: 0;
+            border: none;
+        }
+
+        @keyframes fadeInSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Message bubble colors */
+        [data-testid="stChatMessage"]:has([data-testid="stAvatarIcon-user"]) { background-color: #3c4043; }
+        [data-testid="stChatMessage"]:has([data-testid="stAvatarIcon-assistant"]) { background-color: #2d2d2f; }
+
+        /* Header styling */
+        .chat-header { text-align: left; margin-bottom: 2rem; }
+        .chat-header h1 { font-size: 2.5em; font-weight: 600; color: #e8eaed; margin: 0; }
+        .chat-header p { font-size: 1em; color: #9aa0a6; margin: 0; }
+
+        /* --- UPDATED: Input Area Styling --- */
+
+        /* Style the outer container of the chat input */
+        .stChatInputContainer {
+            background-color: #131314;
+            border-top: 1px solid #2d2d2f;
+            margin: 0 auto;
+            max-width: 800px;
+            background-color: #1e1f20;
+            border: 1px solid #5f6368;
+            border-radius: 24px;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Style the inner, pill-shaped input field container */
+        div[data-testid="stChatInput"] {
+            margin: 0 auto;
+            max-width: 800px;
+            background-color: #1e1f20;
+            border: 1px solid #5f6368;
+            border-radius: 24px;
+            padding: 0.5rem 1rem;
+        }
+
+        /* --- THE FIX --- */
+        /* Target the actual textarea element inside the input box to remove the focus outline */
+        div[data-testid="stChatInput"] textarea {
+            /* This removes the red border/outline that appears on focus */
+            outline: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            /* Ensure text color is correct */
+            color: #e8eaed;
+        }
+        
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] { background-color: #1e1f20; }
+        [data-testid="stSidebar"] .stButton button { background-color: #3c4043; color: #e8eaed; border-radius: 8px; width: 100%; }
+        [data-testid="stSidebar"] .stButton button:hover { background-color: #5f6368; color: #e8eaed; }
+        [data-testid="stSidebar"] .stRadio > label { color: #e8eaed; }
+        [data-testid="stSidebar"] h2 { color: #e8eaed; }
+        [data-testid="stSidebar"] .stMarkdown { color: #9aa0a6; }
+
+        /* Input Area Styling */
+        .stChatInputContainer {
+            background-color: #131314;
+            border-top: 1px solid #2d2d2f;
+        }

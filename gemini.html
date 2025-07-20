@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Ecosystem Simulator with AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+        .modal.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+        .modal:not(.hidden) .modal-content {
+            transform: scale(1);
+        }
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex flex-col lg:flex-row h-screen overflow-hidden">
+
+    <!-- Main Simulation Area -->
+    <main class="flex-grow flex items-center justify-center p-4 lg:order-2">
+        <canvas id="ecosystemCanvas" class="bg-gray-800 rounded-lg shadow-2xl w-full h-full"></canvas>
+    </main>
+
+    <!-- Control Panel -->
+    <aside class="w-full lg:w-96 bg-gray-900/80 backdrop-blur-sm p-6 space-y-6 overflow-y-auto lg:order-1 border-r border-gray-700">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-emerald-400">EvoSim AI</h1>
+            <p class="text-gray-400">A Virtual Ecosystem Simulator</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-semibold text-gray-300 border-b border-gray-700 pb-2">Controls</h2>
+            <div class="grid grid-cols-3 gap-2">
+                <button id="startPauseBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Start</button>
+                <button id="resetBtn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Reset</button>
+                <button id="addSpeciesBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Add Species</button>
+            </div>
+            <div class="text-center text-gray-400">Day: <span id="dayCounter" class="font-mono text-white">0</span></div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-semibold text-gray-300 border-b border-gray-700 pb-2">Population Stats</h2>
+            <div id="statsContainer" class="space-y-2 text-sm">
+                <!-- Stats will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Population Chart -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-semibold text-gray-300 border-b border-gray-700 pb-2">Population History</h2>
+            <div class="bg-gray-800 p-2 rounded-lg h-48">
+                <canvas id="populationChart"></canvas>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Add Species Modal -->
+    <div id="addSpeciesModal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md transform scale-95">
+            <div class="flex justify-between items-start">
+                <h2 class="text-2xl font-bold mb-4 text-white">Create a New Species</h2>
+                <button id="aiSuggestBtn" class="flex items-center gap-2 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-lg transition-colors">
+                    <span id="aiSuggestSpinner" class="hidden spinner"></span>
+                    <span id="aiSuggestText">✨ AI Suggestion</span>
+                </button>
+            </div>
+            <form id="addSpeciesForm" class="space-y-4">
+                <!-- Form fields remain the same -->
+                 <div>
+                    <label for="speciesName" class="block text-sm font-medium text-gray-300">Species Name</label>
+                    <input type="text" id="speciesName" name="name" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-sky-500 focus:border-sky-500" required>
+                </div>
+                <div>
+                    <label for="speciesColor" class="block text-sm font-medium text-gray-300">Color</label>
+                    <input type="color" id="speciesColor" name="color" value="#ffffff" class="mt-1 block w-full rounded-md h-10">
+                </div>
+                <div>
+                    <label for="speciesDiet" class="block text-sm font-medium text-gray-300">Diet</label>
+                    <select id="speciesDiet" name="diet" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-sky-500 focus:border-sky-500">
+                        <option value="herbivore">Herbivore (eats Plants)</option>
+                        <option value="carnivore">Carnivore (eats other species)</option>
+                        <option value="omnivore">Omnivore (eats Plants & others)</option>
+                    </select>
+                </div>
+                <div id="preySelection" class="hidden">
+                     <label class="block text-sm font-medium text-gray-300">Prey (what it eats)</label>
+                     <div id="preyList" class="mt-1 space-y-1 max-h-32 overflow-y-auto p-2 bg-gray-700 rounded-md">
+                        <!-- Prey options will be populated by JS -->
+                     </div>
+                </div>
+                <div>
+                    <label for="startPopulation" class="block text-sm font-medium text-gray-300">Starting Population</label>
+                    <input type="number" id="startPopulation" name="population" value="10" min="1" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="cancelAddSpecies" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg transition-colors">Add to World</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Species Detail Modal -->
+    <div id="speciesDetailModal" class="modal hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-lg transform scale-95">
+            <div id="speciesDetailContent">
+                <!-- Content populated by JS -->
+            </div>
+             <div class="flex justify-end mt-6">
+                <button type="button" id="closeDetailModal" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- Gemini API Key ---
+        // The API key will be left as an empty string. The execution environment
+        // will automatically handle authentication.
+        const GEMINI_API_KEY = "AIzaSyDSYsFof0jjv3E7XS6lwAlR0EpD8lxLxxY";
+
+        // --- Canvas & Context ---
+        const canvas = document.getElementById('ecosystemCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // --- UI Elements ---
+        const startPauseBtn = document.getElementById('startPauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const addSpeciesBtn = document.getElementById('addSpeciesBtn');
+        const dayCounterEl = document.getElementById('dayCounter');
+        const statsContainer = document.getElementById('statsContainer');
+        
+        // Add Species Modal UI
+        const addSpeciesModal = document.getElementById('addSpeciesModal');
+        const addSpeciesForm = document.getElementById('addSpeciesForm');
+        const cancelAddSpeciesBtn = document.getElementById('cancelAddSpecies');
+        const dietSelector = document.getElementById('speciesDiet');
+        const preySelectionDiv = document.getElementById('preySelection');
+        const preyListDiv = document.getElementById('preyList');
+        const aiSuggestBtn = document.getElementById('aiSuggestBtn');
+
+        // Species Detail Modal UI
+        const speciesDetailModal = document.getElementById('speciesDetailModal');
+        const speciesDetailContent = document.getElementById('speciesDetailContent');
+        const closeDetailModalBtn = document.getElementById('closeDetailModal');
+
+        // --- Simulation State ---
+        let simulationRunning = false;
+        let day = 0;
+        let entities = [];
+        let speciesConfig = {};
+        let animationFrameId;
+
+        // --- Chart.js Setup ---
+        let populationChart;
+        const chartCanvas = document.getElementById('populationChart').getContext('2d');
+
+        function initializeChart() {
+            if (populationChart) {
+                populationChart.destroy();
+            }
+            const datasets = Object.keys(speciesConfig).map(name => ({
+                label: name,
+                data: [],
+                borderColor: speciesConfig[name].color,
+                backgroundColor: `${speciesConfig[name].color}33`,
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: 0
+            }));
+
+            populationChart = new Chart(chartCanvas, {
+                type: 'line',
+                data: { labels: [], datasets: datasets },
+                options: {
+                    animation: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#4b5563' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: '#4b5563' } }
+                    },
+                    plugins: { legend: { labels: { color: '#d1d5db', boxWidth: 15, padding: 15 } } },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // --- Core Classes (Entity class remains the same) ---
+        class Entity {
+            constructor(x, y, speciesName) {
+                this.id = Math.random().toString(36).substr(2, 9);
+                this.x = x;
+                this.y = y;
+                this.speciesName = speciesName;
+                const config = speciesConfig[speciesName];
+                this.size = config.size;
+                this.color = config.color;
+                this.energy = 50;
+                this.age = 0;
+                this.maxAge = config.maxAge + Math.random() * 200;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.target = null;
+            }
+
+            draw() {
+                ctx.beginPath();
+                if (this.speciesName === 'Plant') {
+                     ctx.fillStyle = this.color;
+                     ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+                } else {
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(this.x - this.size, this.y - this.size - 5, this.size * 2, 3);
+                    ctx.fillStyle = 'lime';
+                    ctx.fillRect(this.x - this.size, this.y - this.size - 5, (this.energy / 100) * this.size * 2, 3);
+                }
+            }
+
+            update() {
+                if (this.speciesName === 'Plant') return;
+                this.age++;
+                this.energy -= 0.1;
+                if (this.energy <= 0 || this.age > this.maxAge) {
+                    this.die();
+                    return;
+                }
+                this.findTarget();
+                this.move();
+                this.reproduce();
+            }
+            
+            findTarget() {
+                const config = speciesConfig[this.speciesName];
+                let closestTarget = null;
+                let minDistance = Infinity;
+                if (this.energy < 70) {
+                    for (const entity of entities) {
+                        if (config.prey.includes(entity.speciesName)) {
+                            const distance = Math.hypot(this.x - entity.x, this.y - entity.y);
+                            if (distance < minDistance && distance < 150) {
+                                minDistance = distance;
+                                closestTarget = entity;
+                            }
+                        }
+                    }
+                }
+                this.target = closestTarget;
+            }
+
+            move() {
+                const config = speciesConfig[this.speciesName];
+                if (this.target && this.target.energy > 0) {
+                    const angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+                    this.vx = Math.cos(angle) * config.speed;
+                    this.vy = Math.sin(angle) * config.speed;
+                    const distance = Math.hypot(this.x - this.target.x, this.y - this.target.y);
+                    if (distance < this.size) this.eat(this.target);
+                } else {
+                    this.vx += (Math.random() - 0.5) * 0.5;
+                    this.vy += (Math.random() - 0.5) * 0.5;
+                    const speed = Math.hypot(this.vx, this.vy);
+                    if (speed > config.speed) {
+                        this.vx = (this.vx / speed) * config.speed;
+                        this.vy = (this.vy / speed) * config.speed;
+                    }
+                }
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < this.size || this.x > canvas.width - this.size) this.vx *= -1;
+                if (this.y < this.size || this.y > canvas.height - this.size) this.vy *= -1;
+                this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
+            }
+            
+            eat(target) {
+                this.energy = Math.min(100, this.energy + 50);
+                target.die();
+                this.target = null;
+            }
+
+            reproduce() {
+                const config = speciesConfig[this.speciesName];
+                if (this.energy > 80 && Math.random() < config.reproductionRate) {
+                    this.energy -= 40;
+                    const newX = this.x + (Math.random() - 0.5) * 20;
+                    const newY = this.y + (Math.random() - 0.5) * 20;
+                    entities.push(new Entity(newX, newY, this.speciesName));
+                }
+            }
+
+            die() {
+                entities = entities.filter(e => e.id !== this.id);
+            }
+        }
+
+        // --- Simulation Logic (Setup and Game Loop are mostly the same) ---
+        function setup() {
+            day = 0;
+            entities = [];
+            speciesConfig = {
+                'Plant': { color: '#22c55e', size: 4, speed: 0, maxAge: 100, reproductionRate: 0.05, prey: [], diet: 'producer', bio: 'The foundational producer of this ecosystem, converting light into energy.' },
+                'Rabbit': { color: '#a78bfa', size: 6, speed: 1.5, maxAge: 800, reproductionRate: 0.002, prey: ['Plant'], diet: 'herbivore', bio: 'A swift herbivore that feeds on plants.' },
+                'Fox': { color: '#f97316', size: 8, speed: 1.2, maxAge: 1200, reproductionRate: 0.001, prey: ['Rabbit'], diet: 'carnivore', bio: 'A cunning predator that hunts smaller animals.' }
+            };
+            addInitialPopulation('Plant', 150);
+            addInitialPopulation('Rabbit', 20);
+            addInitialPopulation('Fox', 5);
+            initializeChart();
+            updateStats();
+        }
+
+        function addInitialPopulation(speciesName, count) {
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                entities.push(new Entity(x, y, speciesName));
+            }
+        }
+
+        function gameLoop() {
+            if (!simulationRunning) return;
+            day++;
+            dayCounterEl.textContent = day;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (Math.random() < 0.5) {
+                const plantCount = entities.filter(e => e.speciesName === 'Plant').length;
+                if (plantCount < 250) addInitialPopulation('Plant', 5);
+            }
+            entities.forEach(entity => {
+                entity.update();
+                entity.draw();
+            });
+            updateStats();
+            if (day % 10 === 0) updateChart();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateStats() {
+            const counts = {};
+            Object.keys(speciesConfig).forEach(name => counts[name] = 0);
+            entities.forEach(e => {
+                if(counts[e.speciesName] !== undefined) counts[e.speciesName]++;
+            });
+
+            statsContainer.innerHTML = '';
+            for (const speciesName in counts) {
+                const config = speciesConfig[speciesName];
+                const statEl = document.createElement('div');
+                statEl.className = 'flex items-center justify-between bg-gray-800 p-2 rounded-md hover:bg-gray-700 cursor-pointer transition-colors';
+                statEl.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 rounded-full mr-3" style="background-color: ${config.color};"></span>
+                        <span class="font-medium text-gray-300">${speciesName}</span>
+                    </div>
+                    <span class="font-mono font-semibold text-white">${counts[speciesName]}</span>
+                `;
+                statEl.addEventListener('click', () => showSpeciesDetails(speciesName, counts[speciesName]));
+                statsContainer.appendChild(statEl);
+            }
+        }
+        
+        function updateChart() {
+            if (!populationChart) return;
+            populationChart.data.labels.push(day);
+            if(populationChart.data.labels.length > 50) populationChart.data.labels.shift();
+            populationChart.data.datasets.forEach(dataset => {
+                const speciesName = dataset.label;
+                const count = entities.filter(e => e.speciesName === speciesName).length;
+                dataset.data.push(count);
+                if(dataset.data.length > 50) dataset.data.shift();
+            });
+            populationChart.update();
+        }
+
+        // --- Gemini API Functions ---
+        async function generateBioProfile(speciesName) {
+            const config = speciesConfig[speciesName];
+            const predators = Object.keys(speciesConfig).filter(name => speciesConfig[name].prey && speciesConfig[name].prey.includes(speciesName));
+            
+            const prompt = `Generate a short, creative biological profile for a fictional creature named '${speciesName}'.
+            - It is a ${config.diet}.
+            - It eats: ${config.prey.join(', ') || 'nothing'}.
+            - It is preyed upon by: ${predators.join(', ') || 'nothing'}.
+            Describe its appearance, behavior, and role in the ecosystem in about 50-70 words. Be creative and engaging.`;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                const result = await response.json();
+                const text = result.candidates[0].content.parts[0].text;
+                speciesConfig[speciesName].bio = text;
+                return text;
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                return "Failed to generate a bio. Please check the console for errors.";
+            }
+        }
+
+        async function suggestNewSpecies() {
+            const existingSpecies = Object.keys(speciesConfig).map(name => {
+                const pop = entities.filter(e => e.speciesName === name).length;
+                return `${name} (${speciesConfig[name].diet}, pop: ${pop})`;
+            }).join(', ');
+
+            const prompt = `Given an ecosystem with the following species: [${existingSpecies}]. 
+            Suggest a new, creative fictional species that could fit into this ecosystem.
+            Provide a name, a diet (herbivore, carnivore, or omnivore), and a list of potential prey from the existing species list.
+            The species should be balanced and not immediately destabilize the ecosystem.`;
+            
+            const schema = {
+                type: "OBJECT",
+                properties: {
+                    "name": { "type": "STRING" },
+                    "diet": { "type": "STRING", "enum": ["herbivore", "carnivore", "omnivore"] },
+                    "prey": { "type": "ARRAY", "items": { "type": "STRING" } }
+                },
+                required: ["name", "diet"]
+            };
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                }
+            };
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                const result = await response.json();
+                const jsonText = result.candidates[0].content.parts[0].text;
+                return JSON.parse(jsonText);
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                return null;
+            }
+        }
+
+        // --- Modal and Event Listeners ---
+        function showSpeciesDetails(speciesName, count) {
+            const config = speciesConfig[speciesName];
+            const predators = Object.keys(speciesConfig).filter(name => speciesConfig[name].prey && speciesConfig[name].prey.includes(speciesName));
+            
+            speciesDetailContent.innerHTML = `
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="w-8 h-8 rounded-full" style="background-color: ${config.color};"></span>
+                    <h2 class="text-3xl font-bold text-white">${speciesName}</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+                    <div><strong>Population:</strong> ${count}</div>
+                    <div><strong>Diet:</strong> <span class="capitalize">${config.diet}</span></div>
+                    <div><strong>Prey:</strong> ${config.prey.join(', ') || 'N/A'}</div>
+                    <div><strong>Predators:</strong> ${predators.join(', ') || 'N/A'}</div>
+                </div>
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold text-gray-200 mb-2">Bio-Profile</h3>
+                    <div id="bioProfile" class="bg-gray-700 p-4 rounded-lg text-gray-300 min-h-[100px]">${config.bio || 'No bio generated yet.'}</div>
+                    <button id="generateBioBtn" class="mt-4 flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-colors">
+                         <span id="bioSpinner" class="hidden spinner"></span>
+                         <span id="bioBtnText">✨ Generate New Bio</span>
+                    </button>
+                </div>
+            `;
+            speciesDetailModal.classList.remove('hidden');
+
+            document.getElementById('generateBioBtn').addEventListener('click', async (e) => {
+                const btn = e.currentTarget;
+                const spinner = document.getElementById('bioSpinner');
+                const btnText = document.getElementById('bioBtnText');
+                const bioProfileDiv = document.getElementById('bioProfile');
+                
+                spinner.classList.remove('hidden');
+                btnText.textContent = 'Generating...';
+                btn.disabled = true;
+                
+                bioProfileDiv.textContent = 'Generating...';
+                const newBio = await generateBioProfile(speciesName);
+                bioProfileDiv.textContent = newBio;
+                
+                spinner.classList.add('hidden');
+                btnText.textContent = '✨ Generate New Bio';
+                btn.disabled = false;
+            });
+        }
+
+        closeDetailModalBtn.addEventListener('click', () => speciesDetailModal.classList.add('hidden'));
+        speciesDetailModal.addEventListener('click', (e) => { if (e.target === speciesDetailModal) speciesDetailModal.classList.add('hidden'); });
+
+        aiSuggestBtn.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const spinner = document.getElementById('aiSuggestSpinner');
+            const btnText = document.getElementById('aiSuggestText');
+            
+            spinner.classList.remove('hidden');
+            btnText.textContent = 'Thinking...';
+            btn.disabled = true;
+
+            const suggestion = await suggestNewSpecies();
+            
+            if (suggestion) {
+                document.getElementById('speciesName').value = suggestion.name;
+                document.getElementById('speciesDiet').value = suggestion.diet;
+                dietSelector.dispatchEvent(new Event('change')); // Trigger change to show/hide prey list
+
+                // Check the prey checkboxes
+                const preyCheckboxes = preyListDiv.querySelectorAll('input[type="checkbox"]');
+                preyCheckboxes.forEach(cb => {
+                    cb.checked = suggestion.prey && suggestion.prey.includes(cb.value);
+                });
+            } else {
+                alert("Could not get an AI suggestion. Please try again.");
+            }
+
+            spinner.classList.add('hidden');
+            btnText.textContent = '✨ AI Suggestion';
+            btn.disabled = false;
+        });
+
+        // Other event listeners (start/pause, reset, add species form) remain largely the same
+        startPauseBtn.addEventListener('click', () => {
+            simulationRunning = !simulationRunning;
+            if (simulationRunning) {
+                startPauseBtn.textContent = 'Pause';
+                startPauseBtn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
+                startPauseBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
+                gameLoop();
+            } else {
+                startPauseBtn.textContent = 'Start';
+                startPauseBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+                startPauseBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                cancelAnimationFrame(animationFrameId);
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            simulationRunning = false;
+            startPauseBtn.textContent = 'Start';
+            startPauseBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+            startPauseBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+            cancelAnimationFrame(animationFrameId);
+            setup();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            entities.forEach(e => e.draw());
+            dayCounterEl.textContent = '0';
+        });
+
+        addSpeciesBtn.addEventListener('click', () => {
+            updatePreyList();
+            addSpeciesModal.classList.remove('hidden');
+        });
+
+        cancelAddSpeciesBtn.addEventListener('click', () => addSpeciesModal.classList.add('hidden'));
+        addSpeciesModal.addEventListener('click', (e) => { if (e.target === addSpeciesModal) addSpeciesModal.classList.add('hidden'); });
+
+        dietSelector.addEventListener('change', (e) => {
+            const diet = e.target.value;
+            if (diet === 'carnivore' || diet === 'omnivore') {
+                preySelectionDiv.classList.remove('hidden');
+            } else {
+                preySelectionDiv.classList.add('hidden');
+            }
+        });
+        
+        function updatePreyList() {
+            preyListDiv.innerHTML = '';
+            Object.keys(speciesConfig).filter(name => name !== 'Plant').forEach(name => {
+                const checkboxContainer = document.createElement('div');
+                checkboxContainer.className = 'flex items-center';
+                checkboxContainer.innerHTML = `
+                    <input id="prey_${name}" type="checkbox" value="${name}" class="h-4 w-4 rounded border-gray-500 text-sky-600 focus:ring-sky-500 bg-gray-600">
+                    <label for="prey_${name}" class="ml-2 text-sm text-gray-300">${name}</label>
+                `;
+                preyListDiv.appendChild(checkboxContainer);
+            });
+        }
+
+        addSpeciesForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const name = formData.get('name');
+            const diet = formData.get('diet');
+            if (speciesConfig[name]) {
+                alert('A species with this name already exists.');
+                return;
+            }
+            let prey = [];
+            if (diet === 'herbivore' || diet === 'omnivore') prey.push('Plant');
+            if (diet === 'carnivore' || diet === 'omnivore') {
+                const selectedPrey = preyListDiv.querySelectorAll('input[type="checkbox"]:checked');
+                selectedPrey.forEach(checkbox => prey.push(checkbox.value));
+            }
+            const newSpecies = {
+                color: formData.get('color'),
+                size: 6 + Math.random() * 4,
+                speed: 0.8 + Math.random() * 0.7,
+                maxAge: 1000 + Math.random() * 500,
+                reproductionRate: 0.0015,
+                prey: prey,
+                diet: diet,
+                bio: 'A newly discovered species, its story is yet to be written.'
+            };
+            speciesConfig[name] = newSpecies;
+            addInitialPopulation(name, parseInt(formData.get('population'), 10));
+            populationChart.data.datasets.push({
+                label: name, data: [], borderColor: newSpecies.color,
+                backgroundColor: `${newSpecies.color}33`, tension: 0.3, borderWidth: 2, pointRadius: 0
+            });
+            populationChart.update();
+            updateStats();
+            addSpeciesModal.classList.add('hidden');
+            e.target.reset();
+            preySelectionDiv.classList.add('hidden');
+        });
+
+        // --- Initial Setup ---
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            if (!simulationRunning) {
+                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                 entities.forEach(e => e.draw());
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        setup();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        entities.forEach(e => e.draw());
+    </script>
+</body>
+</html>
