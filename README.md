@@ -65,7 +65,7 @@ This chatbot leverages Gemini AI models, emotion detection, and natural language
 📁 MENTAL-HEALTH-CHATBOT/
 │
 ├── 📁 __pycache__/      # Python's cached files (auto-generated)
-├── 📁 assests/           # Folder for static assets like images or logos
+├── 📁 assets/           # Folder for static assets like images or logos
 ├── 📄 .env               # Stores secret keys, like your GEMINI_API_KEY
 ├── 📄 .gitignore         # Tells Git which files to ignore (like .env and __pycache__)
 ├── 🐍 app.py             # The main Streamlit application file that runs the chatbot
