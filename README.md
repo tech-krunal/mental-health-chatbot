@@ -62,16 +62,39 @@ This chatbot leverages Gemini AI models, emotion detection, and natural language
 ## 🏗️ Project Structure
 
 ```
-📁 aura-chatbot/
+📁 MENTAL-HEALTH-CHATBOT/
 │
-├── app.py                 # Main Streamlit app
-├── chatbot.py            # Emotion detection logic
-├── gemini_bot.py         # API integration for Gemini responses
-├── sos.py                # SOS modal and trigger system
-├── motivational_quotes.py
-├── mood_tracker.py
-├── requirements.txt      # Python dependencies
-└── README.md             # This file
+├── 📁 __pycache__/      # Python's cached files (auto-generated)
+│
+├── 📁 assests/           # Folder for static assets like images or logos
+│
+├── 📄 .env               # Stores secret keys, like your GEMINI_API_KEY
+│
+├── 📄 .gitignore         # Tells Git which files to ignore (like .env and __pycache__)
+│
+├── 🐍 app.py             # The main Streamlit application file that runs the chatbot
+│
+├── 🐍 backup.py          # (Likely for backing up data or code)
+│
+├── 🐍 chatbot.py         # Contains the emotion detection logic
+│
+├── 🐍 gemini_bot.py      # Handles the API calls to the Google Gemini models
+│
+├── 🐍 mood_tracker.py    # Logic for logging and retrieving user mood history
+│
+├── 🐍 motivational_quotes.py # Provides random motivational quotes
+│
+├── 📄 README.md           # The project documentation for GitHub
+│
+├── 📄 requirements.txt    # Lists all the Python libraries needed for the project
+│
+├── 🐍 sos.py             # Manages the SOS trigger and the pop-up modal
+│
+├── 📄 style.css          # (Likely an older CSS file, as styles are now in app.py)
+│
+├── 🐍 test_api.py        # A script for testing API connections
+│
+└── 🐍 utils.py           # (Likely for utility or helper functions)
 ```
 
 ---
