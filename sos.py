@@ -32,7 +32,7 @@ def get_sos_modal_html() -> str:
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s ease-in-out;
+            transition: fadeInSlideUp 0.2s ease-in-out;
         }
         .modal-content {
             background: #1e1f20;
@@ -76,9 +76,9 @@ def get_sos_modal_html() -> str:
                 <li><strong>AASRA:</strong> <a href="tel:+919820466726">+91-9820466726</a></li>
                 <li><strong>KIRAN Mental Health:</strong> <a href="tel:18005990019">1800-599-0019</a></li>
             </ul>
-            <h4>🏥 Vadodara Facilities:</h4>
-            <ul><li>Parul Sevashram Hospital</li><li>SSG Hospital Psychiatry Dept.</li></ul>
             <p>🛑 If it's a medical emergency, please dial <a href="tel:108"><strong>108</strong></a>.</p>
+            <p>For more resources, visit <a href="https://www.mentalhealth.gov/get-help/immediate-help">MentalHealth.gov</a>.</p>
+            <p>To close this modal, click the 'Inspire me' button or press the Escape key.</p> 
         </div>
     </div>
 
