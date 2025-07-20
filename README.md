@@ -3,7 +3,7 @@
 
 **Aura** is an AI-powered mental health chatbot built using Streamlit and Google Gemini models. Designed with empathy and emotional intelligence, Aura engages users in supportive conversations, detects emotional tone, and offers motivational quotes, SOS resources, and mental health tracking tools — all with a focus on user privacy and well-being.
 
-![Aura Screenshot](./screenshot.png)
+![Aura Screenshot](./assets/screenshot.png)
 
 ---
 
@@ -41,7 +41,7 @@ This chatbot leverages Gemini AI models, emotion detection, and natural language
 
 > Chat Interface | Sidebar Features | SOS Modal  
 > :-------------:|:----------------:|:----------:  
-> ![chat](./preview_chat.png) | ![sidebar](./preview_sidebar.png) | ![sos](./preview_sos.png)
+> ![chat](./assets/preview_chat.png) | ![sidebar](./assets/preview_sidebar.png) | ![sos](./assets/preview_sos.png)
 
 ---
 
